@@ -21,7 +21,8 @@ const SubmitButton = styled(Button)({
     width: '200px',
     display: 'block',
     margin: '30px auto',
-    backgroundColor: '#ffc65c',
+    backgroundColor: '#ffc65c !important',
+    color: 'black',
     borderColor: '#ffc65c'
 })
 
@@ -34,6 +35,16 @@ const Form = () => {
         comments: ''
     });
     const [uploadedFile, setFile] = useState({});
+    const [errors, setErrors] = useState({
+        name: '',
+        email: '',
+        number: '',
+        invoice: '',
+        images: '',
+        complaintType: '',
+        channel: '',
+        category: ''
+    })
 
     // fetch common data on mounted 
     useEffect(() => {
@@ -79,6 +90,48 @@ const Form = () => {
 
     const submitFormHandler = (event) => {
         console.log('on submit ---', event);
+        event.preventDefault();
+        if (!formData?.name) {
+            setErrors(prev => ({
+                ...prev,
+                name: "Name is required"
+            }));
+        }
+        if (!formData?.number || formData?.number.length !== 10 || !['6', '7', '8', '9'].includes(formData?.number[0])) {
+            setErrors(prev => ({
+                ...prev,
+                number: !formData.number ? 'Phone number is required' : 'Please enter a valid Phone Number'
+            }));
+        }
+
+        let regex = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]+$/i;
+        if (!formData.email || !regex.test(formData?.email)) {
+            setErrors(prev => ({
+                ...prev,
+                email: !formData.email ? 'Phone email is required' : 'Please enter a valid email'
+            }));
+        }
+
+        if (!formData.complaintType?.value) {
+            setErrors(prev => ({
+                ...prev,
+                complaintType: 'Complaint type is required'
+            }));
+        }
+
+        if (!formData.channel?.value) {
+            setErrors(prev => ({
+                ...prev,
+                channel: 'Channel is required'
+            }));
+        }
+
+        if (!formData.category?.value) {
+            setErrors(prev => ({
+                ...prev,
+                category: 'Category is required'
+            }));
+        }
     }
 
     const setFormDataHandler = (e, type) => {
@@ -106,10 +159,6 @@ const Form = () => {
                 }));
                 break;
             case 'email':
-                let regex = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]+$/i;
-                if(!regex.test(e.target.value)){
-                    console.log('erorr');
-                } 
                 setFormData(prev => ({
                     ...prev,
                     email: e.target.value
@@ -123,16 +172,34 @@ const Form = () => {
         <h3>Complaint Form</h3>
         <form className="">
             <div className="input-wrapper">
-                <TextField id="standard-basic" label="Name" variant="outlined" fullWidth margin="normal"
+                <TextField id="standard-basic"
+                    error={Boolean(errors?.name)}
+                    label={<>Name<span className="text-danger">*</span></>}
+                    variant="outlined"
+                    fullWidth
+                    margin="normal"
+                    helperText={errors?.name}
                     onChange={(e) => setFormDataHandler(e, 'name')} value={formData.name} />
-                <TextField label="Phone Number" variant="outlined" fullWidth margin="normal"
+                <TextField error={Boolean(errors?.number)}
+                    label={<>Phone Number<span className="text-danger">*</span></>}
+                    variant="outlined"
+                    fullWidth
+                    margin="normal"
+                    helperText={errors?.number}
                     onChange={(e) => setFormDataHandler(e, 'number')} value={formData.number} />
             </div>
             <div className="input-wrapper">
-                <TextField id="standard-basic" label="Email" variant="outlined" fullWidth margin="normal"
+                <TextField error={Boolean(errors?.email)}
+                    id="standard-basic"
+                    label={<>Email<span className="text-danger">*</span></>}
+                    variant="outlined"
+                    fullWidth
+                    helperText={errors?.email}
+                    margin="normal"
                     onChange={(e) => setFormDataHandler(e, 'email')} value={formData.email} />
-                <TextField label="Complaint Type" variant="outlined" fullWidth select margin="normal"
-                    helperText="Please select your complaint type"
+                <TextField error={Boolean(errors?.complaintType)}
+                    label={<>Complaint Type<span className="text-danger">*</span></>} variant="outlined" fullWidth select margin="normal"
+                    helperText={errors?.complaintType}
                     defaultValue={""}>
                     {
                         commonData?.complaintTypes?.length ? commonData.complaintTypes.map(itm => (
@@ -144,8 +211,9 @@ const Form = () => {
                 </TextField>
             </div>
             <div className="input-wrapper">
-                <TextField label="Product Categories" variant="outlined" fullWidth select margin="normal"
-                    helperText="Please select the product category"
+                <TextField error={Boolean(errors?.category)}
+                    label={<>Product Categories<span className="text-danger">*</span></>} variant="outlined" fullWidth select margin="normal"
+                    helperText={errors?.category}
                     defaultValue={""}>
                     {
                         commonData?.categories?.length ? commonData.categories.map(itm => (
@@ -155,9 +223,13 @@ const Form = () => {
                         )) : null
                     }
                 </TextField>
-                <TextField label="Purchase Channel" variant="outlined" fullWidth select margin="normal"
-                    helperText="Please select the purchase channel"
-
+                <TextField error={Boolean(errors?.channel)}
+                    label={<>Purchase Channel<span className="text-danger">*</span></>}
+                    variant="outlined"
+                    fullWidth
+                    select
+                    margin="normal"
+                    helperText={errors?.channel}
                     defaultValue={""}>
                     {
                         commonData?.channel?.length ? commonData.channel.map(itm => (
@@ -177,15 +249,19 @@ const Form = () => {
                     <Button
                         component="label"
                         role={undefined}
-                        variant="contained"
+                        variant="outlined"
+                        color="primary"
                         tabIndex={-1}
                         startIcon={<UploadFileOutlinedIcon />}
                     >
-                        Upload Invoice
+                        Upload Invoice<span className="text-danger">*</span>
                         <VisuallyHiddenInput type="file"
                             accept="application/pdf"
                             onChange={(event) => fileUploadHandler(event, 'invoice')} />
                     </Button>
+                    {
+                        errors?.invoice ? <span>errors.invoice</span> : null
+                    }
                     <div>
                         {
                             uploadedFile?.invoice?.length ? <span>{uploadedFile.invoice[0].name}</span> : null
@@ -196,16 +272,20 @@ const Form = () => {
                     <Button
                         component="label"
                         role={undefined}
-                        variant="contained"
+                        variant="outlined"
+                        color="primary"
                         tabIndex={-1}
                         startIcon={<UploadFileOutlinedIcon />}
                     >
-                        Upload Images
+                        Upload Images<span className="text-danger">*</span>
                         <VisuallyHiddenInput type="file"
                             accept="images/*"
                             multiple
                             onChange={(event) => fileUploadHandler(event, 'images')} />
                     </Button>
+                    {
+                        errors?.invoice ? <span>errors.invoice</span> : null
+                    }
                     <div>
                         {
                             uploadedFile?.images?.length ?
@@ -218,7 +298,7 @@ const Form = () => {
                 </Box>
             </div>
             <div className="input-wrapper">
-                <SubmitButton type="button" variant="contained" onClick={submitFormHandler}>
+                <SubmitButton type="button" onClick={submitFormHandler}>
                     Submit
                 </SubmitButton>
             </div>
